@@ -501,6 +501,11 @@ func (pending *LlmRequest) useLoadedRunner(runner *runnerRef, finished chan *Llm
 // (if any). Returns whether the scheduler needs to evict a model to make this one fit.
 func (s *Scheduler) load(req *LlmRequest, systemInfo ml.SystemInfo, gpus []ml.DeviceInfo, requireFull bool) bool {
 	numParallel := max(int(envconfig.NumParallel()), 1)
+	// Per-model override (bench-parallel patch): a manifest params layer may set
+	// "num_parallel" to give this model its own slot count.
+	if req.opts.NumParallel > 0 {
+		numParallel = req.opts.NumParallel
+	}
 	completion := req.model.CheckCapabilities(model.CapabilityCompletion) == nil
 
 	// Embedding models should always be loaded with parallel=1
@@ -510,7 +515,7 @@ func (s *Scheduler) load(req *LlmRequest, systemInfo ml.SystemInfo, gpus []ml.De
 
 	// Some architectures are not safe with num_parallel > 1.
 	// ref: https://github.com/ollama/ollama/issues/4165
-	if slices.Contains([]string{"mllama", "qwen3vl", "qwen3vlmoe", "qwen35", "qwen35moe", "qwen3next", "lfm2", "lfm2moe", "nemotron_h", "nemotron_h_moe", "nemotron_h_omni"}, req.model.Config.ModelFamily) && numParallel != 1 {
+	if slices.Contains([]string{"mllama", "qwen3vl", "qwen3vlmoe", "qwen3next", "lfm2", "lfm2moe", "nemotron_h", "nemotron_h_moe", "nemotron_h_omni"}, req.model.Config.ModelFamily) && numParallel != 1 {
 		numParallel = 1
 		slog.Warn("model architecture does not currently support parallel requests", "architecture", req.model.Config.ModelFamily)
 	}

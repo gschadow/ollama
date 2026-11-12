@@ -602,6 +602,7 @@ type Options struct {
 type Runner struct {
 	NumCtx          int   `json:"num_ctx,omitempty"`
 	NumBatch        int   `json:"num_batch,omitempty"`
+	NumParallel     int   `json:"num_parallel,omitempty"`
 	NumGPU          int   `json:"num_gpu,omitempty"`
 	MainGPU         *int  `json:"main_gpu,omitempty"`
 	UseMMap         *bool `json:"use_mmap,omitempty"`
